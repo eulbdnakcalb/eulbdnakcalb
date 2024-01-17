@@ -2,20 +2,20 @@ import boto3
 
 def test_s3_connection():
     try:
-        # 创建 S3 客户端
+        # S3クライアントを作成
         s3 = boto3.client('s3')
 
-        # 尝试列出 S3 存储桶
+        # S3バケットをリストアップしてみる
         buckets = s3.list_buckets()
 
-        # 如果成功列出存储桶，则连接正常
-        print("AWS S3 连接正常，可访问的存储桶列表：")
+        # バケットのリストが取得できれば、接続は正常
+        print("AWS S3接続は正常で、アクセス可能なバケットのリスト：")
         for bucket in buckets['Buckets']:
             print(bucket['Name'])
 
     except Exception as e:
-        # 打印详细的错误信息
-        print("AWS S3 连接失败，错误信息：", str(e))
+        # 詳細なエラーメッセージを出力
+        print("AWS S3接続に失敗しました。エラーメッセージ：", str(e))
 
 if __name__ == "__main__":
     test_s3_connection()
