@@ -1,0 +1,41 @@
+import boto3
+import time
+from datetime import datetime, timedelta
+
+# CloudWatch Logs クライアントを作成
+logs_client = boto3.client('logs')
+
+# 複数のロググループ名を定義
+log_group_names = ['log_group1', 'log_group2', 'log_group3']
+
+# S3 バケットおよびプレフィックスを定義
+s3_bucket_arn = '<S3バケットARN>'
+s3_prefix = '<S3バケット内のプレフィックス>'
+
+# 開始日と終了日を定義
+start_date = datetime(2023, 12, 1)
+end_date = datetime(2023, 12, 30)
+
+# 各ロググループについてループ処理
+for log_group_name in log_group_names:
+    current_date = start_date
+    while current_date <= end_date:
+        # 開始および終了のタイムスタンプを計算
+        start_time = int(current_date.timestamp())
+        end_time = int((current_date + timedelta(days=1)).timestamp())
+
+        # エクスポートタスクを作成
+        response = logs_client.create_export_task(
+            taskName=f'ExportTask_{log_group_name}_{current_date.strftime("%Y-%m-%d")}',
+            logGroupName=log_group_name,
+            fromTime=start_time,
+            to=end_time,
+            destination=s3_bucket_arn,
+            destinationPrefix=f'{s3_prefix}/{log_group_name}/{current_date.strftime("%Y/%m/%d")}/'
+        )
+
+        # エクスポートタスクのレスポンスを表示
+        print(response)
+
+        # 1日を増やす
+        current_date += timedelta(days=1)
