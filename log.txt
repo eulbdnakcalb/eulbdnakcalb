@@ -2,29 +2,29 @@ import boto3
 import time
 from datetime import datetime, timedelta
 
-# CloudWatch Logs クライアントを作成
+# 创建 CloudWatch Logs 客户端
 logs_client = boto3.client('logs')
 
-# 複数のロググループ名を定義
+# 定义多个日志组名称
 log_group_names = ['log_group1', 'log_group2', 'log_group3']
 
-# S3 バケットおよびプレフィックスを定義
-s3_bucket_arn = '<S3バケットARN>'
-s3_prefix = '<S3バケット内のプレフィックス>'
+# 定义 S3 存储桶和前缀
+s3_bucket_arn = '<S3存储桶ARN>'
+s3_prefix = '<S3存储桶中的前缀>'
 
-# 開始日と終了日を定義
-start_date = datetime(2023, 12, 1)
+# 定义开始日期和结束日期
+start_date = datetime(2023, 12, 2)
 end_date = datetime(2023, 12, 30)
 
-# 各ロググループについてループ処理
+# 遍历每个日志组
 for log_group_name in log_group_names:
     current_date = start_date
     while current_date <= end_date:
-        # 開始および終了のタイムスタンプを計算（ミリ秒単位で精密）
+        # 计算开始和结束时间戳（精确到毫秒）
         start_time = int(current_date.timestamp() * 1000)
         end_time = int((current_date + timedelta(days=1)).timestamp() * 1000)
 
-        # エクスポートタスクを作成
+        # 创建导出任务
         response = logs_client.create_export_task(
             taskName=f'ExportTask_{log_group_name}_{current_date.strftime("%Y-%m-%d")}',
             logGroupName=log_group_name,
@@ -34,24 +34,13 @@ for log_group_name in log_group_names:
             destinationPrefix=f'{s3_prefix}/{log_group_name}/{current_date.strftime("%Y/%m/%d")}/'
         )
 
-        # エクスポートタスクのレスポンスを表示
+        # 打印导出任务的响应
         print(response)
 
-        # エクスポートタスクの完了を待つ
-        wait_start_time = time.time()
-        wait_timeout = 600  # タイムアウト時間を 10 分に設定
-        while time.time() < wait_start_time + wait_timeout:
-            response = logs_client.describe_export_tasks(taskId=response['taskId'])
-            if response['exportTasks'][0]['status']['code'] == 'COMPLETED':
-                print(f"Task {response['taskId']} completed successfully.")
-                break
-            elif response['exportTasks'][0]['status']['code'] == 'FAILED':
-                print(f"Task {response['taskId']} failed.")
-                break
-            time.sleep(30)  # 30 秒ごとにタスクの状態を確認
-        else:
-            print(f"Task {response['taskId']} の完了待ちがタイムアウトしました。")
-
-        # 1日を増やす
+        # 增加一天
         current_date += timedelta(days=1)
+
+        # 等待 5 秒（根据需要调整等待时间）
+        time.sleep(5)
+
 
