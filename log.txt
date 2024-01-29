@@ -20,9 +20,9 @@ end_date = datetime(2023, 12, 30)
 for log_group_name in log_group_names:
     current_date = start_date
     while current_date <= end_date:
-        # 開始および終了のタイムスタンプを計算
-        start_time = int(current_date.timestamp())
-        end_time = int((current_date + timedelta(days=1)).timestamp())
+        # 開始および終了のタイムスタンプを計算（ミリ秒単位で精密）
+        start_time = int(current_date.timestamp() * 1000)
+        end_time = int((current_date + timedelta(days=1)).timestamp() * 1000)
 
         # エクスポートタスクを作成
         response = logs_client.create_export_task(
@@ -37,5 +37,21 @@ for log_group_name in log_group_names:
         # エクスポートタスクのレスポンスを表示
         print(response)
 
+        # エクスポートタスクの完了を待つ
+        wait_start_time = time.time()
+        wait_timeout = 600  # タイムアウト時間を 10 分に設定
+        while time.time() < wait_start_time + wait_timeout:
+            response = logs_client.describe_export_tasks(taskId=response['taskId'])
+            if response['exportTasks'][0]['status']['code'] == 'COMPLETED':
+                print(f"Task {response['taskId']} completed successfully.")
+                break
+            elif response['exportTasks'][0]['status']['code'] == 'FAILED':
+                print(f"Task {response['taskId']} failed.")
+                break
+            time.sleep(30)  # 30 秒ごとにタスクの状態を確認
+        else:
+            print(f"Task {response['taskId']} の完了待ちがタイムアウトしました。")
+
         # 1日を増やす
         current_date += timedelta(days=1)
+
