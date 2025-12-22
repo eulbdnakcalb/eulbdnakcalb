@@ -8,11 +8,13 @@ def load_contact_list(file_path):
     
     for sheet in sheets:
         df = pd.read_excel(file_path, sheet_name=sheet, header=2)
-        deleted = df[df['削除フラグ'] == 1].copy()
-        deleted['シート名'] = sheet
-        all_deleted.append(deleted)
+        
+        if '削除フラグ' in df.columns:
+            deleted = df[df['削除フラグ'] == 1].copy()
+            deleted['シート名'] = sheet
+            all_deleted.append(deleted)
     
-    return pd.concat(all_deleted, ignore_index=True)
+    return pd.concat(all_deleted, ignore_index=True) if all_deleted else pd.DataFrame()
 
 def check_user_existence(deleted_users, ledger_path):
     """削除ユーザーが台帳に存在するか確認"""
@@ -58,23 +60,29 @@ def main():
     contact_path = r"C:\Users\yh980\work\棚卸スクリプト\連絡先一覧.xlsx"
     ledger_path = r"C:\Users\yh980\work\棚卸スクリプト\台帳.xlsx"
     
-    if not os.path.exists(contact_path) or not os.path.exists(ledger_path):
-        print("エラー: ファイルが見つかりません")
-        return
-    
     print("削除ユーザー存在チェックスクリプトを開始します...")
     print("-" * 60)
     
+    # ファイル存在確認
+    if not os.path.exists(contact_path):
+        print(f"エラー: ファイルが見つかりません - {contact_path}")
+        return
+    if not os.path.exists(ledger_path):
+        print(f"エラー: ファイルが見つかりません - {ledger_path}")
+        return
+    
     try:
+        # 1. 連絡先一覧から削除ユーザーを抽出
         deleted_users = load_contact_list(contact_path)
         
-        if len(deleted_users) == 0:
+        if deleted_users.empty:
             print("削除フラグが立っているユーザーはありません。")
             return
         
+        # 2. チェック実行
         results = check_user_existence(deleted_users, ledger_path)
         
-        # 結果表示
+        # 3. 結果表示
         print("\nチェック結果")
         print("="*40)
         
@@ -91,7 +99,7 @@ def main():
             for r in non_existing:
                 print(f"  - {r['シート名']}: {r['氏名']}")
         
-        # Excel出力
+        # 4. Excel出力
         output_path = r"C:\Users\yh980\work\棚卸スクリプト\削除ユーザー存在チェック結果.xlsx"
         pd.DataFrame(results).to_excel(output_path, index=False, engine='openpyxl')
         
