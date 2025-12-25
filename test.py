@@ -27,25 +27,31 @@ def check_user_existence(deleted_users, ledger_path):
         exists = False
         
         if sheet in ['システム主管連絡先', 'AP運用連絡先', 'AP保守連絡先']:
+            # メールはF列(インデックス5)
+            # 払出状況はZ列(インデックス26)
             for _, row in ledger_df.iterrows():
                 if len(row) > 5 and pd.notna(row.iloc[5]) and str(row.iloc[5]).strip() == str(email).strip():
-                    if len(row) > 7 and pd.notna(row.iloc[7]) and str(row.iloc[7]).strip() == '●':
+                    if len(row) > 26 and pd.notna(row.iloc[26]) and str(row.iloc[26]).strip() == '●':
                         exists = True
                         break
         
         elif sheet == 'インフラ運用保守':
+            # メールはDC列(インデックス106)
+            # 払出状況はDX列(インデックス127)
             for _, row in ledger_df.iterrows():
-                # M〜T列チェック
-                if len(row) > 16 and pd.notna(row.iloc[16]) and str(row.iloc[16]).strip() == str(email).strip():
-                    if len(row) > 18 and pd.notna(row.iloc[18]) and str(row.iloc[18]).strip() == '●':
+                if len(row) > 106 and pd.notna(row.iloc[106]) and str(row.iloc[106]).strip() == str(email).strip():
+                    if len(row) > 127 and pd.notna(row.iloc[127]) and str(row.iloc[127]).strip() == '●':
                         exists = True
                         break
-                
-                # X〜AE列チェック
-                if len(row) > 27 and pd.notna(row.iloc[27]) and str(row.iloc[27]).strip() == str(email).strip():
-                    if len(row) > 29 and pd.notna(row.iloc[29]) and str(row.iloc[29]).strip() == '●':
-                        exists = True
-                        break
+            
+            # メールはFA列(インデックス156)
+            # 払出状況はFV列(インデックス177)
+            if not exists:
+                for _, row in ledger_df.iterrows():
+                    if len(row) > 156 and pd.notna(row.iloc[156]) and str(row.iloc[156]).strip() == str(email).strip():
+                        if len(row) > 177 and pd.notna(row.iloc[177]) and str(row.iloc[177]).strip() == '●':
+                            exists = True
+                            break
         
         results.append({
             'シート名': sheet,
