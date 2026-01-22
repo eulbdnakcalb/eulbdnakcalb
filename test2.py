@@ -1,14 +1,30 @@
 import pandas as pd
 
+def load_config():
+    """加载配置文件"""
+    config_path = r"C:\Users\yh980\SK\conf\UserCompare.conf"
+    config = {}
+    with open(config_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                key, value = line.split('=', 1)
+                config[key.strip()] = value.strip()
+    return config
+
 def main():
-    # 文件路径
-    ledger_path = r"C:\Users\yh980\work\棚卸スクリプト\台帳.xlsx"
-    ad_path = r"C:\Users\yh980\work\棚卸スクリプト\AD_export_user.xlsx"
-    
     print("台帳とADエクスポートのユーザー比較を開始します...")
     print("-" * 60)
     
     try:
+        # 加载配置
+        config = load_config()
+        
+        # 从配置文件获取路径
+        ledger_path = config['ledger']
+        ad_path = config['ad_export']
+        output_path = config['ledger_ad_result']
+        
         # 1. 台帳から払出状況が●のユーザーを抽出
         ledger_df = pd.read_excel(ledger_path, sheet_name='ユーザ採番台帳', header=1)
         
@@ -77,8 +93,7 @@ def main():
         print(f"ADに存在する: {existing_count}件")
         print(f"ADに存在しない: {len(missing_users)}件")
         
-        # 結果をExcelに出力
-        output_path = r"C:\Users\yh980\work\棚卸スクリプト\台帳_AD比較結果.xlsx"
+        # 結果をExcelに輸出
         pd.DataFrame(results).to_excel(output_path, index=False, engine='openpyxl')
         
         print(f"\n詳細結果をExcelファイルに出力しました: {output_path}")

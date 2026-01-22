@@ -1,6 +1,18 @@
 import pandas as pd
 import os
 
+def load_config():
+    """加载配置文件"""
+    config_path = r"C:\Users\yh980\SK\conf\UserCompare.conf"
+    config = {}
+    with open(config_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                key, value = line.split('=', 1)
+                config[key.strip()] = value.strip()
+    return config
+
 def load_contact_list(file_path):
     """連絡先一覧.xlsxから削除ユーザーを読み込む"""
     sheets = ['システム主管連絡先', 'AP運用連絡先', 'AP保守連絡先', 'インフラ運用保守']
@@ -63,11 +75,16 @@ def check_user_existence(deleted_users, ledger_path):
     return results
 
 def main():
-    contact_path = r"C:\Users\yh980\work\棚卸スクリプト\連絡先一覧.xlsx"
-    ledger_path = r"C:\Users\yh980\work\棚卸スクリプト\台帳.xlsx"
-    
     print("削除ユーザー存在チェックスクリプトを開始します...")
     print("-" * 60)
+    
+    # 加载配置
+    config = load_config()
+    
+    # 从配置文件获取路径
+    contact_path = config['contact_list']
+    ledger_path = config['ledger']
+    output_path = config['delete_check_result']
     
     # ファイル存在確認
     if not os.path.exists(contact_path):
@@ -106,7 +123,6 @@ def main():
                 print(f"  - {r['シート名']}: {r['氏名']}")
         
         # 4. Excel出力
-        output_path = r"C:\Users\yh980\work\棚卸スクリプト\削除ユーザー存在チェック結果.xlsx"
         pd.DataFrame(results).to_excel(output_path, index=False, engine='openpyxl')
         
         print(f"\n詳細結果をExcelファイルに出力しました: {output_path}")
